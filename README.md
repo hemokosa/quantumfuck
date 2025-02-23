@@ -2,12 +2,14 @@
 
 ## Installation
 
+```bash
 !pip install qulacs qulacsvis
 !pip install exrex
+```
 
 ## Usage
 
-```
+```bash
 # クラスのインスタンス化
 num = 5
 qf = QF(num, regex=False, debug=False)
