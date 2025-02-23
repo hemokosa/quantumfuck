@@ -1,4 +1,4 @@
-# Quantumf*ck: Poetic//Esoteric Quantum Programming Language
+# Quantumf*ck: Poetic Quantum Programming Language
 
 ## Installation
 
