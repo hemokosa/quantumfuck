@@ -9,7 +9,7 @@
 
 ## Usage
 
-```bash
+```python
 # クラスのインスタンス化
 num = 5
 qf = QF(num, regex=False, debug=False)
