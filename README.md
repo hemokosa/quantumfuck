@@ -10,19 +10,19 @@
 ## Usage
 
 ```python
-# クラスのインスタンス化
+# Instantiate class
 num = 5
 qf = QF(num, regex=False, debug=False)
 
-# コードを実行
+# Execute code
 code = "[+!?~#!~@:]"
 state, history, command, circuit = qf.parse(code)
 
-# 状態ベクトルの履歴を出力
+# Output history of state vector
 #for i, s in enumerate(history):
     print(f"Step {i}: {s.get_vector()}")
 
-# 回路の可視化（オプション）
+# visualize the circuit (optional)
 circuit_drawer(circuit, "mpl")
 ```
 
