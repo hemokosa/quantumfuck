@@ -1,5 +1,6 @@
 from qulacs import QuantumCircuit, QuantumState, Observable
 from qulacs.gate import Measurement, DepolarizingNoise
+from qulacsvis import circuit_drawer
 
 import numpy as np
 import random
