@@ -39,8 +39,8 @@ code = "[+!?~#!~@:]"
 state, history, command, circuit = qf.parse(code)
 
 # Output history of state vector
-#for i, s in enumerate(history):
-    print(f"Step {i}: {s.get_vector()}")
+for i, s in enumerate(history):
+    print(f"Step {i}: {s}")
 ```
 
 ## License
