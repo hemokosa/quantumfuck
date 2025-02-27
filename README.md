@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-!pip install qulacs qulacsvis
+!pip install quri-parts[qulacs]
 !pip install exrex
 ```
 
