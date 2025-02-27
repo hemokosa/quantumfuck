@@ -1,6 +1,6 @@
-from qulacs import QuantumCircuit, QuantumState, Observable
-from qulacs.gate import Measurement, DepolarizingNoise
-from qulacsvis import circuit_drawer
+from quri_parts.circuit import QuantumCircuit
+from quri_parts.qulacs.simulator import run_circuit
+from quri_parts.circuit.utils.circuit_drawer import draw_circuit
 
 import numpy as np
 import random
@@ -9,167 +9,164 @@ import exrex
 
 class QF:
     def __init__(self, num_qubits, regex=False, debug=True, init=None):
-        # Initialize a quantum state with the given number of qubits.
-        self.state = QuantumState(num_qubits)
+        self.num_qubits = num_qubits
+
+        # Initialize quantum state
         if init is None:
-            # If no initial state is provided, set the state to |0...0⟩.
-            self.state.set_zero_state()
+            # Default to |0> state
+            self.state = np.zeros(2**num_qubits, dtype=complex)
+            self.state[0] = 1.0
         elif isinstance(init, str):
-            # If the initial state is provided as a binary string,
-            # initialize the state vector accordingly.
-            state_vector = np.zeros(2**num_qubits)
+            # Initialize based on binary string
+            state_vector = np.zeros(2**num_qubits, dtype=complex)
             index = int(init, 2)
             state_vector[index] = 1.0
-            self.state.load(state_vector)
+            self.state = state_vector
         else:
-            # Otherwise, load the provided state.
-            self.state.load(init)
-
-        self.pointer = 0  # Acts as a pointer to the current qubit.
-        self.num_qubits = num_qubits
-        self.regex = regex  # If True, generate a random command sequence using a regex.
-        self.debug = debug  # If True, enable debug logging.
-
-        # Create a temporary circuit and a circuit to store the entire history.
-        self.circuit = QuantumCircuit(num_qubits)
-        self.circuit_all = QuantumCircuit(num_qubits)
-
-        # Initialize lists to keep track of state and command histories.
-        self.state_history = []
-        self.command_history = []
-
+            # Initialize with a given state vector
+            self.state = np.array(init, dtype=complex)
+        
+        self.pointer = 0  # Pointer for qubit selection
+        self.regex = regex  # Enable regex-based command expansion
+        self.debug = debug  # Enable debugging messages
+        
+        # Quantum circuit tracking
+        self.circuit = QuantumCircuit(num_qubits)  # Current circuit
+        self.circuit_all = QuantumCircuit(num_qubits)  # Full circuit history
+        
+        self.state_history = []  # History of quantum states
+        self.command_history = []  # History of executed commands
+        
     def log(self, message):
-        # Print debug messages if debug mode is enabled.
+        # Logs a message if debugging is enabled.
         if self.debug:
             print(message)
 
-    def parse(self, code0):
-        """
-        Parse and execute a sequence of quantum commands.
-        The commands control pointer movement, quantum gate application,
-        measurement, and state manipulation.
-        """
+    def set_Haar_random_state(self):
+        # Generates a Haar-random quantum state.
+        dim = 2**self.num_qubits
+        state = np.random.randn(dim) + 1j * np.random.randn(dim)
+        state = state / np.linalg.norm(state)
+        self.state = state
 
-        # If regex mode is enabled, generate a random command sequence matching the regex.
+    def set_zero_state(self):
+        # Resets the state to |0>.
+        self.state = np.zeros(2**self.num_qubits, dtype=complex)
+        self.state[0] = 1.0
+
+    def parse(self, code0):
+        # Parses and executes a command sequence.
+        
+        # Apply regex expansion if enabled
         if self.regex:
             code = exrex.getone(code0)
             self.log(f"Code: {code}")
         else:
             code = code0
 
-        loop_stack = []  # Stack to handle loops (for '[' and ']')
-        i = 0  # Index for the current command in the code string.
-        h = 0  # Counter for recording state history.
+        loop_stack = []  # Stack to handle loops
+        i = 0  # Command index
+        h = 0  # Circuit update counter
 
         while i < len(code):
             command = code[i]
-            self.log(f"{i, h}: Command: {command}, Pointer: {self.pointer}")
+            self.log(f"{(i, h)}: Command: {command}, Pointer: {self.pointer}")
 
             if command == '>':
-                # Move pointer to the right (wrap around using modulo).
+                # Move pointer right
                 self.pointer = (self.pointer + 1) % self.num_qubits
             elif command == '<':
-                # Move pointer to the left (wrap around using modulo).
+                # Move pointer left
                 self.pointer = (self.pointer - 1) % self.num_qubits
             elif command == '[':
-                # Mark the beginning of a loop by pushing the index onto the stack.
+                # Start loop
                 loop_stack.append(i)
             elif command == ']':
-                # At the end of a loop, perform a measurement.
-                # If measurement returns 0, exit the loop; otherwise, repeat.
-                if self.measure() == 0:
+                # End loop; repeat if measurement result is nonzero
+                if not loop_stack:
+                    self.log("Error: Unmatched ']' found, skipping...")
+                elif self.estimate() == 0:
                     loop_stack.pop()
                 else:
                     i = loop_stack[-1]
+                    continue  # Jump back to loop start
             elif command == ';':
-                # Set the quantum state to a random Haar state.
-                self.state.set_Haar_random_state()
+                # Set state to Haar-random
+                self.set_Haar_random_state()
             elif command == ',':
-                # Reset the quantum state to the zero state.
-                self.state.set_zero_state()
+                # Reset to |0>
+                self.set_zero_state()
             elif command == ':':
-                # Perform a measurement on the current qubit.
-                self.measure()
-            elif command in ['.', 'M']:
-                # Add a measurement gate on the current qubit.
-                self.circuit.add_gate(Measurement(self.pointer, self.pointer))
+                # Perform state estimation
+                self.estimate()
             elif command in ['+', 'H']:
-                # Add a Hadamard gate on the current qubit.
+                # Apply Hadamard gate
                 self.circuit.add_H_gate(self.pointer)
             elif command in ['~', 'T']:
-                # Add a T gate (π/8 phase gate) on the current qubit.
+                # Apply T gate
                 self.circuit.add_T_gate(self.pointer)
             elif command in ['@', 'C']:
-                # Add a CNOT gate.
-                # The target qubit is determined by parsing a number after the command.
+                # Apply CNOT gate
                 match = re.match(r"\d+", code[i+1:])
                 if match:
                     target_bit = (self.pointer + int(match.group(0))) % self.num_qubits
-                    i += len(match.group(0))  # Skip the number in the command string.
+                    i += len(match.group(0))
                 else:
                     target_bit = (self.pointer + 1) % self.num_qubits
                 self.circuit.add_CNOT_gate(self.pointer, target_bit)
             elif command in ['#', 'N']:
-                # Add a depolarizing noise gate with a fixed probability (0.1).
+                # Apply random Pauli error (X, Y, or Z) with probability 0.1
                 prob = 0.1
-                self.circuit.add_gate(DepolarizingNoise(self.pointer, prob))
+                if random.random() < prob:
+                    pauli = random.choice(['X', 'Y', 'Z'])
+                    if pauli == 'X':
+                        self.circuit.add_X_gate(self.pointer)
+                    elif pauli == 'Y':
+                        self.circuit.add_Y_gate(self.pointer)
+                    elif pauli == 'Z':
+                        self.circuit.add_Z_gate(self.pointer)
             elif command == '?':
-                # Randomly choose to apply either a Hadamard or a T gate.
+                # Apply either H or T gate randomly
                 if random.choice([True, False]):
                     self.circuit.add_H_gate(self.pointer)
                 else:
                     self.circuit.add_T_gate(self.pointer)
             elif command == '!':
-                # Set the pointer to a random qubit index.
+                # Set pointer to a random qubit
                 self.pointer = random.randint(0, self.num_qubits - 1)
             elif command == '*':
-                # Jump to a random command in the code.
+                # Jump to a random command index
                 i = random.randint(0, len(code) - 1)
+                continue
             else:
-                # If the command is unrecognized, log a message and skip it.
                 self.log(f"Invalid command: {command}, skipping...")
                 i += 1
                 continue
 
-            # Record the executed command.
             self.command_history.append(command)
 
-            # For commands that modify the quantum state via gates,
-            # update the circuit and record the state history.
-            if command in ['+', 'H', '~', 'T', '@', 'C', '.', 'M', '#', 'N', '?']:
-                self.circuit.update_quantum_state(self.state)
-                self.circuit_all.merge_circuit(self.circuit)
+            # If the command affects the state, update simulation
+            if command in ['+', 'H', '~', 'T', '@', 'C', '#', 'N', '?']:
+                result = run_circuit(self.circuit, self.state)
+                self.state = result
+                # Merge current circuit into full circuit history
+                self.circuit_all += self.circuit
+                # Reset current circuit
                 self.circuit = QuantumCircuit(self.num_qubits)
-                self.state_history.append(self.state.copy())  # Save a copy of the current state.
+                # Save state history
+                self.state_history.append(self.state)
                 h += 1
 
-            i += 1  # Move to the next command.
+            i += 1
 
         self.log("Quantum Circuit Execution Completed")
-        if self.debug:
-            # Visualize the entire quantum circuit if debug mode is enabled.
-            circuit_drawer(self.circuit_all)
-
-        # Return the final quantum state, state history, command history, and complete circuit.
+        draw_circuit(self.circuit_all)  # Draw the final circuit
         return self.state, self.state_history, self.command_history, self.circuit_all
 
-    def measure(self):
-        """
-        Perform a measurement on the current qubit.
-        This function creates an observable corresponding to the Pauli-Z operator on the current qubit,
-        calculates the expectation value, converts it to a probability, and then simulates a measurement outcome.
-        """
-        # Create an observable for a single qubit using the Pauli-Z operator.
-        single_qubit_observable = Observable(self.num_qubits)
-        single_qubit_observable.add_operator(1.0, f"Z {self.pointer}")
-        
-        # Calculate the expectation value ⟨Z⟩ of the current state.
-        e = single_qubit_observable.get_expectation_value(self.state)
-        # Convert the expectation value to a probability for measuring 0.
-        prob = (1.0 - e) * 0.5
-        # Simulate the measurement: return 0 with probability 'prob', otherwise return 1.
-        result = 0 if prob > np.random.rand() else 1
-        self.log(f"Expected Value : {prob}")
-        self.log(f"Measured Result: {result}")
+    def estimate(self):
+        # Estimates the probability of measuring 1 on the selected qubit.
+        dim = 2**self.num_qubits
+        prob = sum(np.abs(self.state[i])**2 for i in range(dim) if (i >> self.pointer) & 1)
+        result = 0 if random.random() > prob else 1
+        self.log(f"Measured qubit {self.pointer}: 1 with probability {prob}, result: {result}")
         return result
-        
