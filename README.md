@@ -16,8 +16,7 @@
 |  +, H | Apply Hadamard gate |
 |  ~, T | Apply $\frac{\pi}{4}$ phase shift gate |
 |  @, C | Apply CNOT gate (target is the next qubit or specified by following number) |
-| ., M | Apply measurement gate |
-| #, N | Apply depolarization noise gate (error rate 0.1) |
+| #, N | Apply random Pauli gate (error rate 0.1) |
 | : | Estimate measurements from state vector (no actual measurement) |
 | , | Initialize state vector |
 | ; | State vector randomization |
@@ -42,9 +41,6 @@ state, history, command, circuit = qf.parse(code)
 # Output history of state vector
 #for i, s in enumerate(history):
     print(f"Step {i}: {s.get_vector()}")
-
-# visualize the circuit (optional)
-circuit_drawer(circuit, "mpl")
 ```
 
 ## License
