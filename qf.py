@@ -25,18 +25,18 @@ class QF:
         else:
             # Initialize with a given state vector
             self.state = np.array(init, dtype=complex)
-        
+
         self.pointer = 0  # Pointer for qubit selection
         self.regex = regex  # Enable regex-based command expansion
         self.debug = debug  # Enable debugging messages
-        
+
         # Quantum circuit tracking
         self.circuit = QuantumCircuit(num_qubits)  # Current circuit
         self.circuit_all = QuantumCircuit(num_qubits)  # Full circuit history
-        
+
         self.state_history = []  # History of quantum states
         self.command_history = []  # History of executed commands
-        
+
     def log(self, message):
         # Logs a message if debugging is enabled.
         if self.debug:
@@ -56,7 +56,7 @@ class QF:
 
     def parse(self, code0):
         # Parses and executes a command sequence.
-        
+
         # Apply regex expansion if enabled
         if self.regex:
             code = exrex.getone(code0)
@@ -114,17 +114,6 @@ class QF:
                 else:
                     target_bit = (self.pointer + 1) % self.num_qubits
                 self.circuit.add_CNOT_gate(self.pointer, target_bit)
-            elif command in ['#', 'N']:
-                # Apply random Pauli error (X, Y, or Z) with probability 0.1
-                prob = 0.1
-                if random.random() < prob:
-                    pauli = random.choice(['X', 'Y', 'Z'])
-                    if pauli == 'X':
-                        self.circuit.add_X_gate(self.pointer)
-                    elif pauli == 'Y':
-                        self.circuit.add_Y_gate(self.pointer)
-                    elif pauli == 'Z':
-                        self.circuit.add_Z_gate(self.pointer)
             elif command == '?':
                 # Apply either H or T gate randomly
                 if random.choice([True, False]):
@@ -146,7 +135,7 @@ class QF:
             self.command_history.append(command)
 
             # If the command affects the state, update simulation
-            if command in ['+', 'H', '~', 'T', '@', 'C', '#', 'N', '?']:
+            if command in ['+', 'H', '~', 'T', '@', 'C', '?']:
                 result = run_circuit(self.circuit, self.state)
                 self.state = result
                 # Merge current circuit into full circuit history

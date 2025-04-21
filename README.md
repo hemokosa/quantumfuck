@@ -9,23 +9,21 @@
 
 ## List of Quantumf*ck commands
 
-| Command | Quantum Circuit Manipulation |
-| --- | --- |
-|  > | Make the next qubit the target of operation (pointer +1 ) |
-|  < | Make the previous qubit the target of operation (pointer -1) |
-|  +, H | Apply Hadamard gate |
-|  ~, T | Apply $\frac{\pi}{4}$ phase shift gate |
-|  @, C | Apply CNOT gate (target is the next qubit or specified by following number) |
-| #, N | Apply random Pauli gate (error rate 0.1) |
-| : | Estimate measurements from state vector (no actual measurement) |
-| , | Initialize state vector |
-| ; | State vector randomization |
-| [ | Start of loop |
-| ] | Conditional loop termination (exits loop if measured value is 0, otherwise returns to beginning of loop) |
-| ? | Hadamard gate or $\frac{\pi}{4}$ phase shift gate is applied randomly |
-| ! | Randomly move the qubit (pointer) to be manipulated |
-| * | Randomly move execution point |
-
+| Command | Quantum Circuit Manipulation                                                                             |
+| ------- | -------------------------------------------------------------------------------------------------------- |
+| >       | Make the next qubit the target of operation (pointer +1 )                                                |
+| <       | Make the previous qubit the target of operation (pointer -1)                                             |
+| +, H    | Apply Hadamard gate                                                                                      |
+| ~, T    | Apply$\frac{\pi}{4}$ phase shift gate                                                                  |
+| @, C    | Apply CNOT gate (target is the next qubit or specified by following number)                              |
+| :       | Estimate measurements from state vector (no actual measurement)                                          |
+| ,       | Initialize state vector                                                                                  |
+| ;       | State vector randomization                                                                               |
+| [       | Start of loop                                                                                            |
+| ]       | Conditional loop termination (exits loop if measured value is 0, otherwise returns to beginning of loop) |
+| ?       | Hadamard gate or$\frac{\pi}{4}$ phase shift gate is applied randomly                                   |
+| !       | Randomly move the qubit (pointer) to be manipulated                                                      |
+| *       | Randomly move execution point                                                                            |
 
 ## Usage
 
