@@ -105,6 +105,9 @@ class QF:
             elif command in ['~', 'T']:
                 # Apply T gate
                 self.circuit.add_T_gate(self.pointer)
+            elif command in ['x', 'X']:
+                # Apply X gate
+                self.circuit.add_X_gate(self.pointer)
             elif command in ['@', 'C']:
                 # Apply CNOT gate
                 match = re.match(r"\d+", code[i+1:])
@@ -135,7 +138,7 @@ class QF:
             self.command_history.append(command)
 
             # If the command affects the state, update simulation
-            if command in ['+', 'H', '~', 'T', '@', 'C', '?']:
+            if command in ['+', 'H', '~', 'T', 'x', 'X', '@', 'C', '?']:
                 result = run_circuit(self.circuit, self.state)
                 self.state = result
                 # Merge current circuit into full circuit history
