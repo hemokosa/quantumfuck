@@ -36,6 +36,7 @@ class QF:
 
         self.state_history = []  # History of quantum states
         self.command_history = []  # History of executed commands
+        self.state_history.append(self.state.copy())
 
     def log(self, message):
         # Logs a message if debugging is enabled.
