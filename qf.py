@@ -104,8 +104,11 @@ class QF:
                 # Apply Hadamard gate
                 self.circuit.add_H_gate(self.pointer)
             elif command in ['~', 'T']:
-                # Apply T gate
+                # Apply Tdag gate
                 self.circuit.add_T_gate(self.pointer)
+            elif command in ['-', 'D']:
+                # Apply X gate
+                self.circuit.add_Tdag_gate(self.pointer)
             elif command in ['x', 'X']:
                 # Apply X gate
                 self.circuit.add_X_gate(self.pointer)
@@ -139,7 +142,7 @@ class QF:
             self.command_history.append(command)
 
             # If the command affects the state, update simulation
-            if command in ['+', 'H', '~', 'T', 'x', 'X', '@', 'C', '?']:
+            if command in ['+', 'H', '~', 'T', '-', 'D', 'x', 'X', '@', 'C', '?']:
                 result = run_circuit(self.circuit, self.state)
                 self.state = result
                 # Merge current circuit into full circuit history
